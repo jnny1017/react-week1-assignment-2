@@ -20,58 +20,77 @@ function createElement(tagName, props, ...children) {
   return element;
 }
 
-// TODO calculation 변수 리팩터링
-// TODO 2개 이상 연속한 숫자의 연산
-let calculation;
+const initialState = {
+  accumulator: 0,
+  number: null,
+  operator: '',
+}
 
-function render(count = 0) {
-  const handleClickNumber = (value) => {
-    render(value);
-  };
+function render({ accumulator, number, operator }) {
+  function handleClickReset() {
+    render(initialState);
+  }
 
-  const handleClickValue = (event) => {
-    calculation = event.target.value;
-  };
+  function handleClickNumber(value) {
+    render({
+      accumulator,
+      number: (number || 0) * 10 + value,
+      operator,
+    });
+  }
 
-  const handleClickSum = () => {
-    if (calculation === 'plus') {
-      render(count + count);
-    }
-    if (calculation === 'minus') {
-      render(count - count);
-    }
-    if (calculation === 'multiplication') {
-      render(count * count);
-    }
-    if (calculation === 'division') {
-      render(count / count);
-    }
-  };
+  function handleClickOperator(value) {
+    render({
+        accumulator: calculate(operator, accumulator, number),
+        number: null,
+        operator : value,
+      });
+  }
+
+  function or(x, y) {
+    return x === null ? y : x;
+  }
+
+  const operatorFunctions = {
+    '+': (x, y) => x + y,
+    '-': (x, y) => x - y,
+    '*': (x, y) => x * y,
+    '/': (x, y) => x / y,
+  }
+
+  function defaultFunction(x, y) {
+    return or(y, x);
+  }
+
+  function calculate(operator, accumulator, number) {
+    return (operatorFunctions[operator] || defaultFunction)(accumulator, number);
+  }
 
   const element = (
     <div>
-      <p>간단 계산기</p>
-       <p>{count}</p>
+      <div>{or(number, accumulator)}</div>
       <div>
-        <button type="button" value="plus" onClick={(event) => handleClickValue(event)}>+</button>
-        <button type="button" value="minus" onClick={(event) => handleClickValue(event)}>-</button>
-        <button type="button" value="multiplication" onClick={(event) => handleClickValue(event)}>*</button>
-        <button type="button" value="division" onClick={(event) => handleClickValue(event)}>/</button>
-        <button type="button" onClick={() => handleClickSum()}>=</button>
-      </div>
-      <p>
-        {[1, 2, 3].map((i) => (
+        {Array.from({length: 10}, ((_, i) => i)).map((i) => (
           <button type="button" onClick={() => handleClickNumber(i)}>
             {i}
           </button>
         ))}
-      </p>
+      </div>
+      <div>
+        {['+', '-', '*', '/', '='].map((operator) => (
+          <button type="button" onClick={() => handleClickOperator(operator)}>
+            {operator}
+          </button>
+        ))}
+        <button type="button" onClick={() => handleClickReset()}>reset</button>
+      </div>
     </div>
+
   );
 
   document.getElementById('app').textContent = '';
   document.getElementById('app').appendChild(element);
 }
 
-render();
+render(initialState);
 
